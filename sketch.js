@@ -51,7 +51,7 @@ function preload() {
 
 /* - - Setup - - */
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight, WEBGL);
   captureWebcam(); // launch webcam
 
   // styling
@@ -165,13 +165,20 @@ function draw() {
     ellipse(rightHandX, rightHandY, ellipseSize, ellipseSize); // right hand
 
     // draw labels
-    fill("blue");
     textSize(letterSize);
     text("nose", noseX + 20, noseY); // nose
     text("left shoulder", leftShoulderX + 20, leftShoulderY); // left shoulder
     text("right shoulder", rightShoulderX + 20, rightShoulderY); // right shoulder
     text("left hand", leftHandX + 20, leftHandY); // left hand
     text("right hand", rightHandX + 20, rightHandY); // right hand
+
+    push();
+    normalMaterial();
+    translate(noseX, noseY, 0);
+    rotateZ(frameCount * 0.01);
+    rotateX(frameCount * 0.01);
+    rotateY(frameCount * 0.01);
+    torus(50, 20);
 
     pop();
   }
