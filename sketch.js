@@ -24,7 +24,7 @@ https://developers.google.com/mediapipe/solutions/vision/pose_landmarker/index
 What we do in this example:
 - draw a few points
 - connect them with lines
-
+ 
 */
 
 /* - - Variables - - */
@@ -36,6 +36,18 @@ let captureEvent; // callback when webcam is ready
 // styling
 let ellipseSize = 20; // size of the ellipses
 let letterSize = 20; // size of the letter
+
+let myShader;
+
+// function preload() {
+//   // load each shader file (don't worry, we will come back to these!)
+//   myShader = loadShader("shader.vert", "shader.frag");
+// }
+
+function preload() {
+  // load the shader
+  theShader = loadShader("assets/webcam.vert", "assets/webcam.frag");
+}
 
 /* - - Setup - - */
 function setup() {
