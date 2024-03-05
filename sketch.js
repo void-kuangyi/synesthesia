@@ -37,15 +37,21 @@ let captureEvent; // callback when webcam is ready
 let ellipseSize = 20; // size of the ellipses
 let letterSize = 20; // size of the letter
 
+// body tracking
+let bodypix;
+let segmentation;
+const options = {
+  outputStride: 16, // 8, 16, or 32, default is 16
+  segmentationThreshold: 0.3, // 0 - 1, defaults to 0.5
+};
+
 /* - - Setup - - */
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   captureWebcam(); // launch webcam
   // styling
   noStroke();
-  textAlign(LEFT, CENTER);
-  textSize(20);
-  fill("white");
+  bodypix = ml5.bodyPix(capture, options);
 }
 
 /* - - Draw - - */
@@ -56,13 +62,37 @@ function draw() {
   push();
   centerOurStuff(); // center the webcam
   scale(-1, 1); // mirror webcam
-  image(
-    capture,
-    -0.5 * capture.scaledWidth,
-    -0.5 * capture.scaledHeight,
-    capture.scaledWidth,
-    capture.scaledHeight
-  ); // draw webcam
+  if (segmentation) {
+    // image(
+    //   capture,
+    //   -0.5 * capture.scaledWidth,
+    //   -0.5 * capture.scaledHeight,
+    //   capture.scaledWidth,
+    //   capture.scaledHeight
+    // ); // draw webcam
+
+    // push();
+    // background(50);
+    // image(
+    //   segmentation.personMask,
+    //   -0.5 * capture.scaledWidth,
+    //   -0.5 * capture.scaledHeight,
+    //   capture.scaledWidth,
+    //   capture.scaledHeight
+    // );
+    // pop();
+
+    push();
+    background(225);
+    image(
+      segmentation.backgroundMask,
+      -0.5 * capture.scaledWidth,
+      -0.5 * capture.scaledHeight,
+      capture.scaledWidth,
+      capture.scaledHeight
+    );
+    pop();
+  }
 
   scale(-1, 1); // unset mirror
   pop();
@@ -202,7 +232,7 @@ function captureWebcam() {
       // do things when video ready
       // until then, the video element will have no dimensions, or default 640x480
       capture.srcObject = e;
-
+      bodypix.segment(capture, gotResults);
       setCameraDimensions(capture);
       mediaPipe.predictWebcam(capture);
       //mediaPipe.predictWebcam(parentDiv);
@@ -210,6 +240,16 @@ function captureWebcam() {
   );
   capture.elt.setAttribute("playsinline", "");
   capture.hide();
+}
+
+function gotResults(error, result) {
+  if (error) {
+    console.log(error);
+    return;
+  }
+  segmentation = result;
+  console.log(segmentation);
+  bodypix.segment(capture, gotResults);
 }
 
 // function: resize webcam depending on orientation
