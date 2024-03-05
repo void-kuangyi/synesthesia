@@ -37,23 +37,10 @@ let captureEvent; // callback when webcam is ready
 let ellipseSize = 20; // size of the ellipses
 let letterSize = 20; // size of the letter
 
-let myShader;
-
-// function preload() {
-//   // load each shader file (don't worry, we will come back to these!)
-//   myShader = loadShader("shader.vert", "shader.frag");
-// }
-
-function preload() {
-  // load the shader
-  theShader = loadShader("assets/webcam.vert", "assets/webcam.frag");
-}
-
 /* - - Setup - - */
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   captureWebcam(); // launch webcam
-
   // styling
   noStroke();
   textAlign(LEFT, CENTER);
@@ -71,11 +58,12 @@ function draw() {
   scale(-1, 1); // mirror webcam
   image(
     capture,
-    -capture.scaledWidth,
-    0,
+    -0.5 * capture.scaledWidth,
+    -0.5 * capture.scaledHeight,
     capture.scaledWidth,
     capture.scaledHeight
   ); // draw webcam
+
   scale(-1, 1); // unset mirror
   pop();
 
@@ -86,8 +74,21 @@ function draw() {
     //console.log("we have a total of " + mediaPipe.landmarks[0].length + " points");
 
     // nose
-    let noseX = map(mediaPipe.landmarks[0][0].x, 1, 0, 0, capture.scaledWidth);
-    let noseY = map(mediaPipe.landmarks[0][0].y, 0, 1, 0, capture.scaledHeight);
+    let noseX = map(
+      mediaPipe.landmarks[0][0].x,
+      1,
+      0,
+      -0.5 * capture.scaledWidth,
+      0.5 * capture.scaledWidth
+    );
+    console.log(mediaPipe.landmarks);
+    let noseY = map(
+      mediaPipe.landmarks[0][0].y,
+      0,
+      1,
+      -0.5 * capture.scaledHeight,
+      0.5 * capture.scaledHeight
+    );
 
     // left shoulder
     let leftShoulderX = map(
