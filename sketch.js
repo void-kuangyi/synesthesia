@@ -42,8 +42,20 @@ let bodypix;
 let segmentation;
 const options = {
   outputStride: 16, // 8, 16, or 32, default is 16
-  segmentationThreshold: 0.3, // 0 - 1, defaults to 0.5
+  segmentationThreshold: 0.4, // 0 - 1, defaults to 0.5
 };
+
+function createHSBPalette() {
+  colorMode(HSB);
+  options.palette = bodypix.config.palette;
+  Object.keys(options.palette).forEach((part) => {
+    const h = floor(random(360));
+    const s = floor(random(100));
+    const b = floor(random(100));
+    const c = color(255, 140, 100);
+    options.palette[part].color = c;
+  });
+}
 
 /* - - Setup - - */
 function setup() {
@@ -52,6 +64,7 @@ function setup() {
   // styling
   noStroke();
   bodypix = ml5.bodyPix(capture, options);
+  createHSBPalette();
 }
 
 /* - - Draw - - */
@@ -71,21 +84,10 @@ function draw() {
     //   capture.scaledHeight
     // ); // draw webcam
 
-    // push();
-    // background(50);
-    // image(
-    //   segmentation.personMask,
-    //   -0.5 * capture.scaledWidth,
-    //   -0.5 * capture.scaledHeight,
-    //   capture.scaledWidth,
-    //   capture.scaledHeight
-    // );
-    // pop();
-
     push();
-    background(225);
+    background(100, 100, 200);
     image(
-      segmentation.backgroundMask,
+      segmentation.personMask,
       -0.5 * capture.scaledWidth,
       -0.5 * capture.scaledHeight,
       capture.scaledWidth,
@@ -111,7 +113,6 @@ function draw() {
       -0.5 * capture.scaledWidth,
       0.5 * capture.scaledWidth
     );
-    console.log(mediaPipe.landmarks);
     let noseY = map(
       mediaPipe.landmarks[0][0].y,
       0,
@@ -196,12 +197,12 @@ function draw() {
     ellipse(rightHandX, rightHandY, ellipseSize, ellipseSize); // right hand
 
     // draw labels
-    textSize(letterSize);
-    text("nose", noseX + 20, noseY); // nose
-    text("left shoulder", leftShoulderX + 20, leftShoulderY); // left shoulder
-    text("right shoulder", rightShoulderX + 20, rightShoulderY); // right shoulder
-    text("left hand", leftHandX + 20, leftHandY); // left hand
-    text("right hand", rightHandX + 20, rightHandY); // right hand
+    // textSize(letterSize);
+    // text("nose", noseX + 20, noseY); // nose
+    // text("left shoulder", leftShoulderX + 20, leftShoulderY); // left shoulder
+    // text("right shoulder", rightShoulderX + 20, rightShoulderY); // right shoulder
+    // text("left hand", leftHandX + 20, leftHandY); // left hand
+    // text("right hand", rightHandX + 20, rightHandY); // right hand
 
     push();
     normalMaterial();
@@ -228,14 +229,14 @@ function captureWebcam() {
     },
     function (e) {
       captureEvent = e;
-      console.log(captureEvent.getTracks()[0].getSettings());
+      // console.log(captureEvent.getTracks()[0].getSettings());
       // do things when video ready
       // until then, the video element will have no dimensions, or default 640x480
       capture.srcObject = e;
-      bodypix.segment(capture, gotResults);
       setCameraDimensions(capture);
       mediaPipe.predictWebcam(capture);
       //mediaPipe.predictWebcam(parentDiv);
+      bodypix.segmentWithParts(capture, options, gotResults);
     }
   );
   capture.elt.setAttribute("playsinline", "");
@@ -247,9 +248,9 @@ function gotResults(error, result) {
     console.log(error);
     return;
   }
+  bodypix.segmentWithParts(capture, options, gotResults);
   segmentation = result;
   console.log(segmentation);
-  bodypix.segment(capture, gotResults);
 }
 
 // function: resize webcam depending on orientation
