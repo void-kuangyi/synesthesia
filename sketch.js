@@ -45,26 +45,57 @@ const options = {
   segmentationThreshold: 0.4, // 0 - 1, defaults to 0.5
 };
 
-function createHSBPalette() {
-  colorMode(HSB);
-  options.palette = bodypix.config.palette;
-  Object.keys(options.palette).forEach((part) => {
-    const h = floor(random(360));
-    const s = floor(random(100));
-    const b = floor(random(100));
-    const c = color(255, 140, 100);
-    options.palette[part].color = c;
-  });
+let synesthesia;
+
+let theShader;
+let shaderTexture;
+
+let vid;
+
+let img;
+
+let angle = 0;
+
+let rotationSpeed = 0.1;
+
+function preload() {
+  synesthesia = loadModel("assets/synesthesia.obj");
+  theShader = loadShader("assets/texture.vert", "assets/texture.frag");
+  img = loadImage("assets/galaxy.jpeg");
 }
+
+// function createHSBPalette() {
+//   colorMode(HSB);
+//   options.palette = bodypix.config.palette;
+//   Object.keys(options.palette).forEach((part) => {
+//     const h = floor(random(360));
+//     const s = floor(random(100));
+//     const b = floor(random(100));
+//     const c = color(255, 140, 100);
+//     options.palette[part].color = c;
+//   });
+// }
 
 /* - - Setup - - */
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   captureWebcam(); // launch webcam
   // styling
-  noStroke();
+  // noStroke();
+  shaderTexture = createGraphics(100, 100, WEBGL);
+  shaderTexture.noStroke();
+
+  // // turn off the createGraphics layers stroke
+  //
   bodypix = ml5.bodyPix(capture, options);
-  createHSBPalette();
+
+  // createHSBPalette();
+
+  vid = createVideo(["assets/swarm.mp4"]);
+  vid.loop();
+  vid.hide();
+
+  // initialize the createGraphics layers
 }
 
 /* - - Draw - - */
@@ -75,26 +106,25 @@ function draw() {
   push();
   centerOurStuff(); // center the webcam
   scale(-1, 1); // mirror webcam
-  if (segmentation) {
-    // image(
-    //   capture,
-    //   -0.5 * capture.scaledWidth,
-    //   -0.5 * capture.scaledHeight,
-    //   capture.scaledWidth,
-    //   capture.scaledHeight
-    // ); // draw webcam
-
-    push();
-    background(100, 100, 200);
-    image(
-      segmentation.personMask,
-      -0.5 * capture.scaledWidth,
-      -0.5 * capture.scaledHeight,
-      capture.scaledWidth,
-      capture.scaledHeight
-    );
-    pop();
-  }
+  image(
+    capture,
+    -0.5 * capture.scaledWidth,
+    -0.5 * capture.scaledHeight,
+    capture.scaledWidth,
+    capture.scaledHeight
+  ); // draw webcam
+  // if (segmentation) {
+  //   push();
+  //   background(100, 100, 200);
+  //   image(
+  //     segmentation.personMask,
+  //     -0.5 * capture.scaledWidth,
+  //     -0.5 * capture.scaledHeight,
+  //     capture.scaledWidth,
+  //     capture.scaledHeight
+  //   );
+  //   pop();
+  // }
 
   scale(-1, 1); // unset mirror
   pop();
@@ -126,15 +156,15 @@ function draw() {
       mediaPipe.landmarks[0][12].x,
       1,
       0,
-      0,
-      capture.scaledWidth
+      -0.5 * capture.scaledWidth,
+      0.5 * capture.scaledWidth
     );
     let leftShoulderY = map(
       mediaPipe.landmarks[0][12].y,
       0,
       1,
-      0,
-      capture.scaledHeight
+      -0.5 * capture.scaledHeight,
+      0.5 * capture.scaledHeight
     );
 
     // right shoulder
@@ -185,6 +215,21 @@ function draw() {
       capture.scaledHeight
     );
 
+    let waistX = map(
+      mediaPipe.landmarks[0][24].x,
+      1,
+      0,
+      -0.5 * capture.scaledWidth,
+      0.5 * capture.scaledWidth
+    );
+    let waistY = map(
+      mediaPipe.landmarks[0][24].y,
+      0,
+      1,
+      -0.5 * capture.scaledHeight,
+      0.5 * capture.scaledHeight
+    );
+
     push();
     centerOurStuff();
 
@@ -203,16 +248,48 @@ function draw() {
     // text("right shoulder", rightShoulderX + 20, rightShoulderY); // right shoulder
     // text("left hand", leftHandX + 20, leftHandY); // left hand
     // text("right hand", rightHandX + 20, rightHandY); // right hand
+    angle += 0.01;
+    angle = angle % 30;
 
     push();
+    // normalMaterial();
+
+    translate(leftShoulderX, leftShoulderY, 0);
+    rotateX(PI);
+
+    // shaderTexture.shader(theShader);
+    // theShader.setUniform("resolution", [width, height]);
+    // shaderTexture.rect(0, 0, width, height);
+    // texture(shaderTexture);
+    // // here we're using setUniform() to send our uniform values to the shader
+    // theShader.setUniform("resolution", [width, height]);
+
+    // // passing the shaderTexture layer geometry to render on
+    // rotateZ(frameCount * 0.01);
+    // rotateX(frameCount * 0.01);
+    // rotateY(frameCount * 0.01);
+    // texture(vid);
+    ambientLight(255, 0, 255);
+    // texture(img);
     normalMaterial();
-    translate(noseX, noseY, 0);
-    rotateZ(frameCount * 0.01);
-    rotateX(frameCount * 0.01);
-    rotateY(frameCount * 0.01);
-    torus(50, 20);
+    scale(5);
+    model(synesthesia);
 
     pop();
+
+    // push();
+    // texture(img);
+
+    // angle += rotationSpeed;
+
+    // // Keep the angle within the range of 0 to 30 degrees
+    // if (angle > 30 || angle < 0) {
+    //   angle = constrain(angle, 0, 30);
+    //   rotationSpeed *= -1;
+    // }
+    // rotateX(radians(angle));
+    // plane(200, 200);
+    // pop();
   }
 }
 
